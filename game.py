@@ -8,7 +8,7 @@ class Hero:
         self.hp = self.max_hp
         self.attack = 5 + self.level
         self.defense = 5 + self.level
-        self.name = ""
+        self.name = ''
         self.xp = 0
 
     def name_self(self):
@@ -53,87 +53,35 @@ class Monster:
 
 class Room:
     def __init__(self, key):
-        self.room_descriptions = {
-            "home":{"description":"You're at home. This is where you live, unfortunately.","exits":["forest"]},
-            "forest":{"description":"You're in a dark forest. It's fairly gloomy.","exits":["home", "lake"]},
-            "lake":{"description":"You see a lake circled by rocks. It's too cold to swim.","exits":["forest","mountain"]},
-            "mountain":{"description":"You can see for miles around. Don't fall off.","exits":["lake"]}
+        self.room_data = {
+            "home":{"description":"You're at home. This is where you live, unfortunately.",
+                    "exits":["forest"]},
+            "forest":{"description":"You're in a dark forest. It's fairly gloomy.",
+                    "exits":["home", "lake"]},
+            "lake":{"description":"You see a lake circled by rocks. It's too cold to swim.",
+                    "exits":["forest","mountain"]},
+            "mountain":{"description":"You can see for miles around. Don't fall off.",
+                    "exits":["lake"]},
             }
-        self.description = self.room_descriptions[key]["description"]
-        self.exits = self.room_descriptions[key]["exits"]
+        self.description = self.room_data[key]["description"]
+        self.exits = self.room_data[key]["exits"]
         self.name = str(key)
         self.monster_list = {}
 
 class Game:
     def __init__(self):
-        self.command_list = ["look","name","fight","heal",'report','move','commands']
+        self.command_list = ["look","name","fight","heal",'report','move','?']
         self.hero = Hero()
         self.current_room = Room("home")
-        self.populate()
-        print ("Welcome, adventurer.")
-        self.commands()
-        self.hero.name_self()
-        self.hero.look_self()
-        self.look()
-    def commands(self):
-        print "Commands are %s" % ", ".join(self.command_list)
 
-    def combat(self, attacker, defender):
-        attack = int(random.random() * attacker.attack)
-        defense = int(random.random() *defender.defense)
-        print "Attack: %s vs Defense: %s" % (str(attack), str(defense))
-        if attack > defense:
-            print "You hit the %s for %s HP." % (defender.name, str(attack))
-            defender.hp -= attack
-        elif attack == defense:
-            print "The attack missed. You feel kind of disappointed."
-        else:
-            print ("The %s hit you for %s HP and it hurt real bad.") % (defender.name, str(attack))
-            self.hero.hp -= attack
-        if defender.hp <= 0:
-            print "You killed the %s." % defender.name
-            self.hero.xp_up(defender.xp)
-            del self.current_room.monster_list[defender.name]
 
-    def level_up(self):
-        if self.hero.xp > self.hero.level**2 * 10:
-            self.hero.level += 1
-            print "You've reached level " + str(self.hero.level)
-            self.hero.max_hp += self.hero.level
-            self.hero.hp = self.hero.max_hp
-
-    def populate(self):
-        for i in range(self.hero.level):
-            new_monster = random.choice(["Ogre", "Orc", "Goblin"])
-            self.current_room.monster_list[new_monster] = Monster(new_monster)
-
-    def look(self):
-        print self.current_room.description
-        print "You can exit to: %s" % ', '.join(self.current_room.exits)
-        monster_list= []
-        for name in self.current_room.monster_list:
-            monster_list.append(self.current_room.monster_list[name].name)
-        if monster_list:
-            print "You see: %s" % ', '.join(monster_list)
-
-    def look_monster(self, monster):
-        print "The %s has %s HP, %s attack, %s defense, and is worth %s XP." % (monster.name, monster.hp, monster.attack, monster.defense, monster.xp)
-
-    def move(self):
-        target = raw_input("Where will you go?")
-        if target in self.current_room.exits:
-             self.current_room = Room(target)
-             self.populate()
-             self.look()
-        elif target == self.current_room.name:
-            print ("You're already here.")
-        else:
-            print ("You can't get there from here.")
+    def list_commands(self):
+        print 'Commands are', ', '.join(self.command_list[:-1]), 'and', self.command_list[-1] + '.'
 
     def handle_input(self):
-        com = raw_input(self.prompt()).split()
+        com = raw_input(self.prompt()).lower().split()
         if len(com) < 1:
-            print ("What was that again?")
+            print ("Huh?")
         elif com[0] == "fight":
             if len(com) > 1:
                 if com[1] in self.current_room.monster_list:
@@ -151,19 +99,74 @@ class Game:
             else:
                 self.look()
         elif com[0] == "move":
-            self.move()
+            if len(com) > 1:
+                self.move(com[1])
+            else:
+                print "Move where?", "You can exit to: %s" % ', '.join(self.current_room.exits)
         elif com[0] == "name":
             self.hero.name_self()
         elif com[0] == "info":
             self.info()
         elif com[0] == "heal":
             self.hero.heal_self()
-        elif com[0] == "commands":
-            self.commands()
+        elif com[0] == "?":
+            self.list_commands()
         else:
-            print ("What was that again?")
+            print ("lol wut")
 
-    def process(self):
+    def combat(self, attacker, defender):
+        attack = int(random.random() * attacker.attack)
+        defense = int(random.random() *defender.defense)
+        print "Attack: %s vs Defense: %s" % (str(attack), str(defense))
+        if attack > defense:
+            print "You hit the %s for %s HP." % (defender.name.capitalize(), str(attack))
+            defender.hp -= attack
+        elif attack == defense:
+            print "The attack missed. You feel kind of disappointed."
+        else:
+            print ("The %s hit you for %s HP and it hurt real bad.") % (defender.name.capitalize(), str(attack))
+            self.hero.hp -= attack
+        if defender.hp <= 0:
+            print "You killed the %s. How sad for the %s's family." % (defender.name.capitalize(), defender.name.capitalize())
+            self.hero.xp_up(defender.xp)
+            del self.current_room.monster_list[defender.name]
+
+    def level_up(self):
+        if self.hero.xp > self.hero.level**2 * 10:
+            self.hero.level += 1
+            print "You've reached level " + str(self.hero.level)
+            self.hero.max_hp += self.hero.level
+            self.hero.hp = self.hero.max_hp
+
+    def populate(self):
+        for i in range(self.hero.level):
+            new_monster = random.choice(["ogre", "orc", "goblin"])
+            self.current_room.monster_list[new_monster] = Monster(new_monster)
+
+    def look(self):
+        print self.current_room.description
+        print "You can exit to: %s" % ', '.join(self.current_room.exits)
+        monster_list= []
+        for name in self.current_room.monster_list:
+            monster_list.append(self.current_room.monster_list[name].name.capitalize())
+        if monster_list:
+            print "You see: %s" % ', '.join(monster_list)
+
+    def look_monster(self, monster):
+        print ("The %s has %s HP, %s attack, %s defense, and is worth %s XP."
+            % (monster.name.capitalize(), monster.hp, monster.attack, monster.defense, monster.xp))
+
+    def move(self, exit):
+        if exit in self.current_room.exits:
+             self.current_room = Room(exit)
+             self.populate()
+             self.look()
+        elif exit == self.current_room.name:
+            print ("You're already here.")
+        else:
+            print ("You can't get there from here.")
+
+    def update(self):
         self.level_up()
         if self.hero.hp <= 0:
             self.hero.death()
@@ -171,14 +174,21 @@ class Game:
             game = Game()
 
     def prompt(self):
-        return self.hero.name + " HP:" + str(int(self.hero.hp)) + " XP:" + str(self.hero.xp) + " >"
+        return '\n' + self.hero.name + " HP:" + str(int(self.hero.hp)) + " XP:" + str(self.hero.xp) + " >"
 
     def output(self):
         pass
 
 game = Game()
 
+game.populate()
+print ("Welcome, adventurer.")
+game.list_commands()
+game.hero.name_self()
+game.hero.look_self()
+game.look()
+
 while True:
     game.handle_input()
-    game.process()
+    game.update()
     game.output()
